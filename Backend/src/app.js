@@ -6,9 +6,24 @@ const app = express();
 
 app.use(express.json());
 app.use(cookieParser());
+// In your BACKEND code (e.g., server.js)
+const allowedOrigins = [
+  "http://localhost:5173", // For local development
+  "https://resume-analyzer01-6lui.onrender.com",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like Postman or server-to-server)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Blocked by CORS configuration"));
+      }
+    },
     credentials: true,
   }),
 );
