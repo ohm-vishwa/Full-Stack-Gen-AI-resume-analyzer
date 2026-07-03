@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const tokenBlaklistModel = require("../models/blacklist.model");
+const tokenBlacklistModel = require("../models/blacklist.model");
 
 async function authUser(req, res, next) {
   // Use optional chaining in case cookies aren't parsed/present
@@ -13,7 +13,7 @@ async function authUser(req, res, next) {
 
   try {
     // 1. Move the DB operation INSIDE the try/catch block
-    const isTokenBlackListed = await tokenBlaklistModel.findOne({ token });
+    const isTokenBlackListed = await tokenBlacklistModel.findOne({ token });
 
     if (isTokenBlackListed) {
       return res.status(401).json({
