@@ -1,0 +1,163 @@
+// src/services/ai.service.js
+const { GoogleGenAI } = require("@google/genai");
+const ai = new GoogleGenAI({
+  apiKey: process.env.GOOGLE_GEN_API_KEY,
+});
+
+// Explicit uppercase types force the Gemini API engine to build precise object structures
+const rawInterviewSchema = {
+  type: "OBJECT",
+  properties: {
+    matchScore: {
+      type: "INTEGER",
+      description:
+        "A score between 0 and 100 indicating how well the candidate profile matches the job description",
+    },
+    title: {
+      type: "STRING",
+      description: "The title of the targeted job role",
+    },
+    technicalQuestions: {
+      type: "ARRAY",
+      description:
+        "An array of structured technical question objects. DO NOT return plain strings.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          question: {
+            type: "STRING",
+            description: "The technical question text",
+          },
+          intention: {
+            type: "STRING",
+            description: "Why the interviewer is asking this",
+          },
+          answer: {
+            type: "STRING",
+            description: "Detailed guide or points to cover in the response",
+          },
+        },
+        required: ["question", "intention", "answer"],
+      },
+    },
+    behavioralQuestions: {
+      type: "ARRAY",
+      description:
+        "An array of structured behavioral question objects. DO NOT return plain strings.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          question: {
+            type: "STRING",
+            description: "The behavioral situational question text",
+          },
+          intention: {
+            type: "STRING",
+            description: "What soft skill or trait is being evaluated",
+          },
+          answer: {
+            type: "STRING",
+            description:
+              "The best strategy or STAR approach implementation to answer this",
+          },
+        },
+        required: ["question", "intention", "answer"],
+      },
+    },
+    skillGaps: {
+      type: "ARRAY",
+      description:
+        "An array of structured skill gap objects. DO NOT return plain strings.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          skill: {
+            type: "STRING",
+            description: "Name of the missing tool, concept, or library",
+          },
+          severity: {
+            type: "STRING",
+            enum: ["low", "medium", "high"],
+            description: "The gap severity level",
+          },
+        },
+        required: ["skill", "severity"],
+      },
+    },
+    preparationPlan: {
+      type: "ARRAY",
+      description:
+        "An array of day-wise preparation plan objects. DO NOT return plain strings.",
+      items: {
+        type: "OBJECT",
+        properties: {
+          day: {
+            type: "INTEGER",
+            description: "The timeline day number (e.g., 1, 2, 3)",
+          },
+          focus: {
+            type: "STRING",
+            description: "The main focus topic domain area for this day",
+          },
+          tasks: {
+            type: "ARRAY",
+            items: { type: "STRING" },
+            description:
+              "A list of actionable steps or sub-tasks to complete on this day",
+          },
+        },
+        required: ["day", "focus", "tasks"],
+      },
+    },
+  },
+  required: [
+    "matchScore",
+    "title",
+    "technicalQuestions",
+    "behavioralQuestions",
+    "skillGaps",
+    "preparationPlan",
+  ],
+};
+
+async function generateInterviewReport({
+  resume,
+  selfDescription,
+  jobDescription,
+}) {
+  const prompt = `You are an expert interview coach. Create a detailed, comprehensive interview preparation report for the candidate based on the parameters provided.
+
+Candidate Profile Details:
+Resume:
+${resume}
+
+Self Description:
+${selfDescription}
+
+Job Description:
+${jobDescription}
+
+Strict Requirements:
+- Build a full, valid JSON structure matching the schema precisely.
+- Ensure every element within 'technicalQuestions', 'behavioralQuestions', 'skillGaps', and 'preparationPlan' is an OBJECT containing all required keys. Never map strings directly into these arrays.`;
+
+  // Switching to the modern stable gemini-2.5-flash ensures perfect structural schema compliance
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: rawInterviewSchema,
+    },
+  });
+
+  if (!response.text) {
+    throw new Error("Empty AI response text");
+  }
+
+  return JSON.parse(response.text);
+}
+
+module.exports = {
+  generateInterviewReport,
+};
