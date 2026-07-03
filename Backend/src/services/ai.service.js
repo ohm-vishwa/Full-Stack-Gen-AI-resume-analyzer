@@ -160,7 +160,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
 
   try {
     const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -168,7 +168,6 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
       },
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({
       message: "AI model not responding or reached limit!",
     });
