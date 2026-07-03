@@ -159,7 +159,7 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                     `;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: process.env.GEMINI_MODEL,
     contents: prompt,
     config: {
       responseMimeType: "application/json",
