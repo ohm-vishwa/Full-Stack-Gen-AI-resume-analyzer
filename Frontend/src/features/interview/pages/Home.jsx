@@ -14,12 +14,20 @@ const Home = () => {
 
   const handleGenerateReport = async () => {
     const resumeFile = resumeInputRef.current.files[0];
+    if (!resumeFile) {
+      alert("Please select a resume file");
+      return;
+    }
     const data = await generateReport({
       jobDescription,
       selfDescription,
       resumeFile,
     });
-    navigate(`/interview/${data._id}`);
+    if (data && data._id) {
+      navigate(`/interview/${data._id}`);
+    } else {
+      alert("Failed to generate report. Please check the console for errors.");
+    }
   };
 
   if (loading) {

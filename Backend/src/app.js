@@ -7,7 +7,10 @@ const app = express();
 app.use(
   cors({
     origin: (origin, callback) => {
-      callback(null, origin); // Echo the request origin back
+      // Allow requests with no origin (like curl, Postman, or server requests)
+      if (!origin) return callback(null, true);
+      // Echo back the request origin to allow credentials
+      return callback(null, origin);
     },
     credentials: true,
   }),

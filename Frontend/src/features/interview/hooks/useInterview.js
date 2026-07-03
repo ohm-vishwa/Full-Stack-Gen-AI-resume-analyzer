@@ -32,14 +32,15 @@ export const useInterview = () => {
         selfDescription,
         resumeFile,
       });
-      setReport(response.interviewReport);
+      setReport(response?.interviewReport ?? null);
+      return response?.interviewReport ?? null;
     } catch (error) {
-      console.log(error);
+      console.error("Error generating report:", error);
+      setReport(null);
+      return null;
     } finally {
       setLoading(false);
     }
-
-    return response.interviewReport;
   };
 
   const getReportById = async (interviewId) => {
@@ -48,12 +49,14 @@ export const useInterview = () => {
     try {
       response = await getInterviewReportById(interviewId);
       setReport(response?.interviewReport ?? null);
+      return response?.interviewReport ?? null;
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching report:", error);
+      setReport(null);
+      return null;
     } finally {
       setLoading(false);
     }
-    return response.interviewReport;
   };
 
   const getReports = async () => {
@@ -62,13 +65,14 @@ export const useInterview = () => {
     try {
       response = await getAllInterviewReports();
       setReports(response?.interviewReports ?? []);
+      return response?.interviewReports ?? [];
     } catch (error) {
-      console.log(error);
+      console.error("Error fetching reports:", error);
+      setReports([]);
+      return [];
     } finally {
       setLoading(false);
     }
-
-    return response.interviewReports;
   };
 
   const getResumePdf = async (interviewReportId) => {
