@@ -1,5 +1,8 @@
 const pdfParse = require("pdf-parse");
-const { generateInterviewReport } = require("../services/ai.service");
+const {
+  generateInterviewReport,
+  generateResumePdf,
+} = require("../services/ai.service");
 const interviewReportModel = require("../models/interviewReport.model");
 
 async function generateInterviewReportController(req, res) {
@@ -23,7 +26,6 @@ async function generateInterviewReportController(req, res) {
       selfDescription,
       jobDescription,
     });
-    // console.log("ohm.....", interviewReportByAi);
 
     const aiTitle =
       interviewReportByAi?.title?.trim() ||
@@ -59,6 +61,99 @@ async function generateInterviewReportController(req, res) {
   }
 }
 
+async function getAllInterviewReportsController(req, res) {
+  try {
+    const interviewReports = await interviewReportModel
+      .find({ user: req.user.id })
+      .sort({ createdAt: -1 })
+      .select(
+        "-resume -selfDescription -jobDescription -__v -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan",
+      );
+
+    res.status(200).json({
+      message: "Interview reports fetched successfully.",
+      interviewReports,
+    });
+  } catch (error) {
+    console.error("Error in getAllInterviewReportsController:", error);
+    res.status(500).json({
+      error: "Failed to fetch interview reports",
+      details: error.message,
+    });
+  }
+}
+
+async function getInterviewReportByIdController(req, res) {
+  try {
+    const { interviewId } = req.params;
+    const interviewReport = await interviewReportModel.findById(interviewId);
+
+    if (!interviewReport) {
+      return res.status(404).json({ message: "Interview report not found." });
+    }
+
+    if (String(interviewReport.user) !== String(req.user.id || req.user._id)) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    res.status(200).json({
+      message: "Interview report fetched successfully.",
+      interviewReport,
+    });
+  } catch (error) {
+    console.error("Error in getInterviewReportByIdController:", error);
+    res.status(500).json({
+      error: "Failed to fetch interview report",
+      details: error.message,
+    });
+  }
+}
+
+async function generateResumePdfController(req, res) {
+  try {
+    const interviewReportId =
+      req.params.interviewReportId || req.body.interviewReportId;
+
+    if (!interviewReportId) {
+      return res
+        .status(400)
+        .json({ message: "interviewReportId is required." });
+    }
+
+    const interviewReport =
+      await interviewReportModel.findById(interviewReportId);
+
+    if (!interviewReport) {
+      return res.status(404).json({ message: "Interview report not found." });
+    }
+
+    if (String(interviewReport.user) !== String(req.user.id || req.user._id)) {
+      return res.status(403).json({ message: "Access denied." });
+    }
+
+    const pdfBuffer = await generateResumePdf({
+      resume: interviewReport.resume,
+      selfDescription: interviewReport.selfDescription,
+      jobDescription: interviewReport.jobDescription,
+    });
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`,
+    });
+    return res.send(pdfBuffer);
+  } catch (error) {
+    console.error("Error in generateResumePdfController:", error);
+    return res.status(500).json({
+      error: "Failed to generate resume PDF",
+      details: error.message,
+    });
+  }
+}
+
 module.exports = {
   generateInterviewReportController,
+  getAllInterviewReportsController,
+  getInterviewReportByIdController,
+  generateResumePdfController,
 };
