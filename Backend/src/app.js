@@ -4,27 +4,18 @@ const cors = require("cors");
 
 const app = express();
 
+app.use(express.json());
+app.use(cookieParser());
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like curl, Postman, or server requests)
-      if (!origin) return callback(null, true);
-      // Echo back the request origin to allow credentials
-      return callback(null, origin);
-    },
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
   }),
 );
-app.use(express.json());
-app.use(cookieParser());
 
 /* require all the routes here */
 const authRouter = require("./routes/auth.routes");
 const interviewRouter = require("./routes/interview.routes");
-
-/* using all the routes here */
-app.use("/api/auth", authRouter);
-app.use("/api/interview", interviewRouter);
 
 /* test route */
 app.get("/", (req, res) => {
@@ -34,5 +25,9 @@ app.get("/", (req, res) => {
     timestamp: new Date(),
   });
 });
+
+/* using all the routes here */
+app.use("/api/auth", authRouter);
+app.use("/api/interview", interviewRouter);
 
 module.exports = app;

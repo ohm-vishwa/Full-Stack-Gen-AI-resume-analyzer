@@ -5,7 +5,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// VITE_BACKEND_URL=http://localhost:3000
 /**
  * @description Service to generate interview report based on user self description, resume and job description.
  */
