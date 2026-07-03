@@ -158,14 +158,21 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `;
 
-  const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL,
-    contents: prompt,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: zodToJsonSchema(resumePdfSchema),
-    },
-  });
+  try {
+    const response = await ai.models.generateContent({
+      model: process.env.GEMINI_MODEL || "gemini-1.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: zodToJsonSchema(resumePdfSchema),
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      message: "AI model not responding or reached limit!",
+    });
+  }
 
   const jsonContent = JSON.parse(response.text);
 
