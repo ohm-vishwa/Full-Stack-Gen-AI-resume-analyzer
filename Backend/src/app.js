@@ -17,6 +17,15 @@ app.use(cookieParser());
 const authRouter = require("./routes/auth.routes");
 const interviewRouter = require("./routes/interview.routes");
 
+/* test route */
+app.use("/", (req, res) => {
+  res.json({
+    message: "Backend API is running",
+    status: "ok",
+    timestamp: new Date(),
+  });
+});
+
 /* using all the routes here */
 app.use("/api/auth", authRouter);
 app.use("/api/interview", interviewRouter);
