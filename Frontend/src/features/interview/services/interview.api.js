@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://full-stack-gen-ai-resume-analyzer.onrender.com",
+  baseURL: import.meta.env.VITE_BACKEND_URL || "http://localhost:3000",
   withCredentials: true,
 });
 
