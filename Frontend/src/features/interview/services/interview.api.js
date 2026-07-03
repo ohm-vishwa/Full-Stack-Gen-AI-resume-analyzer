@@ -1,11 +1,11 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.BACKEND_URL,
+  baseURL: "https://full-stack-gen-ai-resume-analyzer.onrender.com",
   withCredentials: true,
 });
 
-// BACKEND_URL=http://localhost:3000
+// VITE_BACKEND_URL=http://localhost:3000
 /**
  * @description Service to generate interview report based on user self description, resume and job description.
  */
