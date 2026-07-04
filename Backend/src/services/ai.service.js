@@ -102,6 +102,10 @@ async function generateInterviewReport({
                         Resume: ${resume}
                         Self Description: ${selfDescription}
                         Job Description: ${jobDescription}
+
+  The output must be valid JSON matching the schema below,
+  and must include a top-level field named \"title\" with the job title or role name.
+  Return only JSON, no extra text.
 `;
 
   const response = await ai.models.generateContent({
@@ -158,8 +162,9 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
                         The resume should not be so lengthy, it should ideally be 1-2 pages long when converted to PDF. Focus on quality rather than quantity and make sure to include all the relevant information that can increase the candidate's chances of getting an interview call for the given job description.
                     `;
 
+  let resumeResponse;
   try {
-    const response = await ai.models.generateContent({
+    resumeResponse = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
@@ -168,12 +173,10 @@ async function generateResumePdf({ resume, selfDescription, jobDescription }) {
       },
     });
   } catch (error) {
-    return res.status(500).json({
-      message: "AI model not responding or reached limit!",
-    });
+    throw new Error("AI model not responding or reached limit!");
   }
 
-  const jsonContent = JSON.parse(response.text);
+  const jsonContent = JSON.parse(resumeResponse.text);
 
   const pdfBuffer = await generatePdfFromHtml(jsonContent.html);
 

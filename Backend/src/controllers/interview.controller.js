@@ -5,6 +5,26 @@ const {
 } = require("../services/ai.service");
 const interviewReportModel = require("../models/interviewReport.model");
 
+function inferTitleFromJobDescription(jobDescription) {
+  if (!jobDescription) return undefined;
+
+  const explicitTitle = jobDescription.match(
+    /(?:Job Title|Position|Role)[:\s]*([A-Za-z0-9 &,-]+)/i,
+  );
+  if (explicitTitle?.[1]) {
+    return explicitTitle[1].trim();
+  }
+
+  const commonTitleMatch = jobDescription.match(
+    /\b(?:Senior|Junior|Lead|Principal|Staff|Head|Director|Manager|Engineer|Developer|Analyst|Designer|Consultant|Architect)\b.*?(?=[,.;\n]|$)/i,
+  );
+  if (commonTitleMatch) {
+    return commonTitleMatch[0].trim();
+  }
+
+  return jobDescription.split(/[\n.]/)[0].trim().slice(0, 100);
+}
+
 /**
  * @description Controller to generate interview report based on user self description, resume and job description.
  */
@@ -14,11 +34,26 @@ async function generateInterViewReportController(req, res) {
   ).getText();
   const { selfDescription, jobDescription } = req.body;
 
+  if (!jobDescription || !selfDescription) {
+    return res.status(400).json({
+      message: "Both jobDescription and selfDescription are required.",
+    });
+  }
+
   const interViewReportByAi = await generateInterviewReport({
     resume: resumeContent.text,
     selfDescription,
     jobDescription,
   });
+
+  const title =
+    interViewReportByAi.title || inferTitleFromJobDescription(jobDescription);
+
+  if (!title) {
+    return res.status(500).json({
+      message: "Unable to generate a valid job title for the interview report.",
+    });
+  }
 
   const interviewReport = await interviewReportModel.create({
     user: req.user.id,
@@ -26,6 +61,7 @@ async function generateInterViewReportController(req, res) {
     selfDescription,
     jobDescription,
     ...interViewReportByAi,
+    title,
   });
 
   res.status(201).json({
